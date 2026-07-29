@@ -1,3 +1,6 @@
 import app from "./app.js";
+import parsedEnv from "./config/env.js";
 
-app.listen(3000, () => console.log("Running on 3000"));
+app.listen(parsedEnv.PORT,()=>{
+    console.log("Server Running on port:",parsedEnv.PORT);
+});
