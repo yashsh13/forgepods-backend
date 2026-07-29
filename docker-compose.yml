@@ -1,0 +1,16 @@
+services:
+  # DB url - postgres://yash:mysecretpassword@localhost:5432/forgepods
+  database:
+    image: postgres:16
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=forgepods
+      - POSTGRES_USER=yash
+    volumes:
+      - forgepods_data:/var/lib/postgresql/data
+    container_name: forgepods_database
+
+volumes:
+  forgepods_data:
