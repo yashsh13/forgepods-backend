@@ -4,6 +4,7 @@ import authRouter from "./routes/auth.routes.js";
 import authenticateToken, {
   type AuthRequest,
 } from "./middleware/auth.middleware.js";
+import projectRouter from "./routes/project.routes.js";
 
 const app: Express = express();
 
@@ -26,6 +27,7 @@ app.get(
 );
 
 app.use("/api/auth", authRouter);
+app.use("/api/projects", projectRouter);
 
 export default app;
 

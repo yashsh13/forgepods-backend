@@ -17,6 +17,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.18.3",
   "dependencies": {
+    "@kubernetes/client-node": "^2.0.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
