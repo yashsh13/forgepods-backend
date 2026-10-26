@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc -b",
     "start": "node dist/index.js",
-    "dev": " tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node ./dist/index.js\" "
+    "dev": " tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node ./dist/index.js\" ",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -16,17 +19,24 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.2",
     "@types/pg": "^8.20.0",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.0.5",
     "prisma": "^7.9.1",
+    "supertest": "^7.3.1",
     "tsc-watch": "^7.2.1",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
   }
 }

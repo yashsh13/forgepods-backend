@@ -13,8 +13,84 @@ datasource db {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  username         String   @unique
-  password         String
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String
+  projects     Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+model Project {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  template    ProjectTemplate @default(NODEJS)
+  status      ProjectStatus   @default(CREATED)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspace Workspace?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model Workspace {
+  id String @id @default(cuid())
+
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  podName       String? @unique
+  namespace     String  @default("default")
+  containerName String?
+  image         String  @default("codercom/code-server:latest")
+
+  status       WorkspaceStatus @default(PENDING)
+  accessUrl    String?
+  errorMessage String?
+
+  startedAt DateTime?
+  stoppedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([namespace, status])
+}
+
+enum ProjectTemplate {
+  NODEJS
+  PYTHON
+  REACT
+  NEXTJS
+}
+
+enum ProjectStatus {
+  CREATED
+  PROVISIONING
+  RUNNING
+  STOPPED
+  FAILED
+  DELETED
+}
+
+enum WorkspaceStatus {
+  PENDING
+  CREATING
+  RUNNING
+  STOPPING
+  STOPPED
+  FAILED
+  DELETED
 }
