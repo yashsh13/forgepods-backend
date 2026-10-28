@@ -5,6 +5,8 @@ import {
   getWorkspace,
   deleteWorkspace,
 } from "../services/workspace.service.js";
+import { openWorkspacePortForward } from "../services/local-port-forward.service.js";
+import prismaClient from "../config/database/prismaClient.js";
 
 function getProjectId(req: AuthRequest): string | undefined {
   const id = req.params.id;
@@ -39,7 +41,8 @@ export async function startWorkspace(
       message: "Workspace provisioning requested",
       workspace,
     });
-  } catch {
+  } catch (error) {
+    console.log(error);
     return res.status(500).json({
       message: "Failed to start workspace",
     });
@@ -71,7 +74,9 @@ export async function workspaceStatus(
     }
 
     return res.status(200).json({ workspace });
-  } catch {
+  } catch (error){
+    console.error("Failed to retrieve workspace:", error);
+
     return res.status(500).json({
       message: "Failed to retrieve workspace",
     });
@@ -109,6 +114,68 @@ export async function stopWorkspace(
   } catch {
     return res.status(500).json({
       message: "Failed to delete workspace",
+    });
+  }
+}
+
+
+export async function openWorkspace(req: AuthRequest, res: Response) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.userId;
+
+    if (typeof projectId !== "string" || !userId) {
+      return res.status(400).json({
+        message: "Invalid project ID or missing authentication",
+      });
+    }
+
+    const project = await prismaClient.project.findFirst({
+      where: {
+        id: projectId,
+        userId,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    const workspace = await prismaClient.workspace.findUnique({
+      where: {
+        projectId,
+      },
+    });
+
+    if (
+      !workspace ||
+      workspace.status !== "RUNNING" ||
+      !workspace.podName
+    ) {
+      return res.status(409).json({
+        message: "Workspace is not running or has no service name.",
+      });
+    }
+
+    const workspaceUrl = await openWorkspacePortForward(
+      project.id,
+      workspace.podName,
+    );
+
+    return res.status(200).json({
+      message: "Workspace ready",
+      url: workspaceUrl,
+    });
+  } catch (error) {
+    console.error("Failed to open workspace:", error);
+
+    return res.status(500).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to open workspace",
     });
   }
 }

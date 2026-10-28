@@ -10,6 +10,7 @@ import {
   startWorkspace,
   workspaceStatus,
   stopWorkspace,
+  openWorkspace
 } from "../controllers/workspace.controller.js";
 
 const projectRouter: Router = Router();
@@ -23,5 +24,6 @@ projectRouter.delete("/:id", deleteProject);
 projectRouter.post("/:id/workspace", startWorkspace);
 projectRouter.get("/:id/workspace", workspaceStatus);
 projectRouter.delete("/:id/workspace", stopWorkspace);
+projectRouter.post("/:id/open", openWorkspace);
 
 export default projectRouter;

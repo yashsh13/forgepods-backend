@@ -5,8 +5,15 @@ import authenticateToken, {
   type AuthRequest,
 } from "./middleware/auth.middleware.js";
 import projectRouter from "./routes/project.routes.js";
+import cors from "cors";
 
 const app: Express = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:3001",
+  }),
+);
 
 app.use(express.json());
 

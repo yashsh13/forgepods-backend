@@ -126,8 +126,113 @@ export async function getWorkspace(
     return null;
   }
 
-  return project.workspace;
+  const workspace = project.workspace;
+
+  if (!workspace) {
+    return null;
+  }
+
+  try {
+    const kubernetes = getKubernetesClient();
+
+    if (!workspace.podName) {
+      return await prismaClient.workspace.update({
+        where: {
+          id: workspace.id,
+        },
+        data: {
+          status: "FAILED",
+          errorMessage: "Workspace Pod name is missing.",
+        },
+      });
+    }
+
+    const response = await kubernetes.readNamespacedPod({
+      name: workspace.podName,
+      namespace: workspace.namespace,
+    });
+
+    const pod = response;
+
+    const phase = pod.status?.phase;
+    const containerStatuses = pod.status?.containerStatuses ?? [];
+
+    const containerReady = containerStatuses.some(
+      (container) =>
+        container.name === workspace.containerName &&
+        container.ready,
+    );
+
+    let status = workspace.status;
+
+    if (phase === "Running" && containerReady) {
+      status = "RUNNING";
+    } else if (
+      phase === "Failed" ||
+      phase === "Unknown" ||
+      phase === "Succeeded"
+    ) {
+      status = "FAILED";
+    } else if (phase === "Pending") {
+      status = "CREATING";
+    }
+
+    if (status !== workspace.status) {
+      return await prismaClient.workspace.update({
+        where: {
+          id: workspace.id,
+        },
+        data: {
+          status,
+          ...(status === "RUNNING"
+            ? { startedAt: new Date() }
+            : {}),
+          ...(status === "FAILED"
+            ? {
+                errorMessage: `Kubernetes Pod phase: ${phase}`,
+              }
+            : {}),
+        },
+      });
+    }
+
+    return workspace;
+  } catch (error: unknown) {
+    const statusCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error
+        ? (error as { code?: number }).code
+        : undefined;
+
+    const httpStatus =
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error
+        ? (error as { statusCode?: number }).statusCode
+        : undefined;
+
+    // A missing Pod means the workspace is no longer available.
+    if (statusCode === 404 || httpStatus === 404) {
+      return await prismaClient.workspace.update({
+        where: {
+          id: workspace.id,
+        },
+        data: {
+          status: "FAILED",
+          errorMessage: "Workspace Pod was not found in Kubernetes.",
+        },
+      });
+    }
+
+    console.error("Failed to check Kubernetes Pod status:", error);
+
+    // Don't mark the workspace failed just because Kubernetes
+    // couldn't be reached temporarily.
+    return workspace;
+  }
 }
+
 
 export async function deleteWorkspace(
   projectId: string,

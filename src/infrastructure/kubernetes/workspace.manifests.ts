@@ -41,12 +41,9 @@ export function buildWorkspacePod({
                     {
                     name: "code-server",
                     image: "codercom/code-server:latest",
+                    command: ["/bin/sh", "-c"],
                     args: [
-                        "--auth",
-                        "none",
-                        "--bind-addr",
-                        "0.0.0.0:8080",
-                        "/home/coder/project",
+                      "mkdir -p /home/coder/project && exec code-server --auth none --bind-addr 0.0.0.0:8080 /home/coder/project",
                     ],
                     ports: [
                         {
